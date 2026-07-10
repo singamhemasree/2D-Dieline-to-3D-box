@@ -15,5 +15,3 @@ React + @react-three/fiber + @react-three/drei + Three.js
 1. npm install
 2. npm run dev
 3. Open localhost:5173
-
-Made by Hemasree
