@@ -1,190 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>Hemasree Box - Dieline to 3D</title>
-<style>
-  body { margin: 0; overflow: hidden; background: #f5f5f0; font-family: sans-serif; }
-  #ui {
-    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 14px; z-index: 10;
-  }
-  button {
-    padding: 12px 24px; font-size: 15px; font-weight: bold; border: none; border-radius: 8px;
-    cursor: pointer; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-  }
-  #openBtn { background: #e74c3c; }
-  #closeBtn { background: #27ae60; }
-  #resetBtn { background: #2980b9; }
-  button:hover { filter: brightness(1.1); }
-</style>
-</head>
-<body>
+import { useState } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Text } from '@react-three/drei'
 
-<div id="ui">
-  <button id="openBtn">Open</button>
-  <button id="closeBtn">Close</button>
-  <button id="resetBtn">Reset</button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
-<script>
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf5f5f0);
-
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 8, 10);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 1, 0);
-
-scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.55);
-dirLight.position.set(5, 10, 5);
-scene.add(dirLight);
-
-const outerMat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.FrontSide });
-const innerMat = new THREE.MeshStandardMaterial({ color: 0xf0e6da, side: THREE.FrontSide });
-
-function makeLabelTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512; canvas.height = 512;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, 512, 512);
-  ctx.fillStyle = "#333333";
-  ctx.font = "bold 56px Georgia";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Hemasree", 256, 256);
-  return new THREE.CanvasTexture(canvas);
+export default function App(){
+  const [p, setP] = useState(0)
+  const W=3, H=1, D=2
+  
+  return(
+    <div style={{display:'flex', height:'100vh', background:'#e8f4f8', fontFamily:'Arial'}}>
+      
+      {/* LEFT: SKY DIELINE */}
+      <div style={{flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', padding:20}}>
+        <h4 style={{color:'#4a7a9e', marginBottom:10}}>EASILY RESIZABLE DIELINE</h4>
+        <svg width="320" height="400" viewBox="0 0 320 400">
+          <defs>
+            <pattern id="sky" patternUnits="userSpaceOnUse" width="320" height="400">
+              <rect width="320" height="400" fill="#a8d5e5"/>
+            </pattern>
+          </defs>
+          <g stroke="#333" strokeWidth="1.5" fill="url(#sky)">
+            <rect x="110" y="10" width="100" height="60" rx="5" strokeDasharray="4 2"/>
+            <rect x="10" y="70" width="100" height="80" rx="5" strokeDasharray="4 2"/>
+            <rect x="110" y="70" width="100" height="80"/>
+            <rect x="210" y="70" width="100" height="80" rx="5" strokeDasharray="4 2"/>
+            <rect x="110" y="150" width="100" height="60" rx="5" strokeDasharray="4 2"/>
+            <rect x="110" y="210" width="100" height="80"/>
+            <rect x="110" y="290" width="100" height="60" rx="5" strokeDasharray="4 2"/>
+          </g>
+          {/* Clouds */}
+          <circle cx="60" cy="100" r="15" fill="white"/><circle cx="75" cy="95" r="12" fill="white"/><circle cx="70" cy="110" r="14" fill="white"/>
+          <circle cx="260" cy="100" r="18" fill="white"/><circle cx="275" cy="95" r="14" fill="white"/><circle cx="270" cy="110" r="16" fill="white"/>
+          <circle cx="150" cy="240" r="20" fill="white"/><circle cx="170" cy="235" r="16" fill="white"/><circle cx="165" cy="250" r="18" fill="white"/>
+          {/* Sun */}
+          <circle cx="180" cy="260" r="20" fill="#f4b942"/><g stroke="#f4b942" strokeWidth="2">
+            {[...Array(12)].map((_,i)=><line key={i} x1="180" y1="260" x2={180+35*Math.cos(i*Math.PI/6)} y2={260+35*Math.sin(i*Math.PI/6)}/>)}
+          </g>
+          {/* Moon */}
+          <circle cx="130" cy="240" r="18" fill="#f4b942"/><circle cx="140" cy="235" r="18" fill="#a8d5e5"/>
+          {/* Stars */}
+          <text x="140" y="40" fontSize="14">✨</text><text x="180" y="35" fontSize="18">🌟</text><text x="200" y="45" fontSize="14">✨</text>
+          <text x="50" y="120" fontSize="16">🌟</text><text x="270" y="120" fontSize="14">✨</text>
+          <text x="140" y="180" fontSize="16">🌟</text><text x="170" y="170" fontSize="18">🌟</text><text x="190" y="185" fontSize="14">✨</text>
+          <text x="160" y="340" fontSize="20" fontWeight="bold" fill="white">HEMASREE</text>
+        </svg>
+      </div>
+      
+      {/* RIGHT: 3D SKY BOX */}
+      <div style={{flex:1, padding:20, background:'white'}}>
+        <h3 style={{textAlign:'center', color:'#4a7a9e'}}>3D Mockup - HEMASREE</h3>
+        <div style={{height:'70%', border:'1px solid #a8d5e5', borderRadius:8}}>
+          <Canvas camera={{position:[4,3,5]}}>
+            <ambientLight intensity={1.2}/>
+            <directionalLight position={[5,10,7]}/>
+            
+            <group>
+              {/* BOTTOM with Sun */}
+              <mesh position={[0, -H/2, 0]}>
+                <boxGeometry args={[W, 0.05, D]}/>
+                <meshStandardMaterial color="#a8d5e5"/>
+              </mesh>
+              
+              {/* FRONT */}
+              <group position={[0, -H/2, D/2]} rotation={[-p*Math.PI/2, 0, 0]}>
+                <mesh><boxGeometry args={[W, H, 0.05]}/><meshStandardMaterial color="#a8d5e5"/></mesh>
+              </group>
+              
+              {/* BACK with HEMASREE */}
+              <group position={[0, -H/2, -D/2]} rotation={[p*Math.PI/2, 0, 0]}>
+                <mesh><boxGeometry args={[W, H, 0.05]}/><meshStandardMaterial color="#a8d5e5"/></mesh>
+                <Text position={[0, 0, 0.03]} rotation={[0, Math.PI, 0]} fontSize={0.25} color="white">HEMASREE</Text>
+              </group>
+              
+              {/* LEFT with Cloud */}
+              <group position={[-W/2, -H/2, 0]} rotation={[0, p*Math.PI/2, 0]}>
+                <mesh><boxGeometry args={[0.05, H, D]}/><meshStandardMaterial color="#a8d5e5"/></mesh>
+              </group>
+              
+              {/* RIGHT with Cloud */}
+              <group position={[W/2, -H/2, 0]} rotation={[0, -p*Math.PI/2, 0]}>
+                <mesh><boxGeometry args={[0.05, H, D]}/><meshStandardMaterial color="#a8d5e5"/></mesh>
+              </group>
+              
+              {/* TOP LID with Moon + Stars */}
+              <group position={[0, H/2, -D/2]} rotation={[p*Math.PI/2, 0, 0]}>
+                <mesh position={[0, 0, D/2]}>
+                  <boxGeometry args={[W, 0.05, D]}/>
+                  <meshStandardMaterial color="#a8d5e5"/>
+                </mesh>
+              </group>
+            </group>
+            <OrbitControls/>
+          </Canvas>
+        </div>
+        
+        <input type="range" min="0" max="1" step="0.01" value={p} 
+          onChange={e=>setP(parseFloat(e.target.value))} 
+          style={{width:'100%', marginTop:15, accentColor:'#4a7a9e'}}/>
+        <div style={{display:'flex', justifyContent:'space-between', fontSize:12, color:'#4a7a9e'}}><span>Open</span><span>Close</span></div>
+      </div>
+    </div>
+  )
 }
-const labelMat = new THREE.MeshStandardMaterial({ map: makeLabelTexture(), side: THREE.FrontSide });
-
-const W = 3.2, D = 3.2;   // bottom footprint (center square)
-const H = 1.4;            // side wall height
-const flapH = 1.1;        // front/back rounded flap height
-
-// ---- bottom (fixed, root) ----
-const bottom = new THREE.Mesh(new THREE.PlaneGeometry(W, D), outerMat);
-bottom.rotation.x = -Math.PI / 2;
-scene.add(bottom);
-
-// ---- rounded flap shape for front/back (matches the rounded-corner cut lines) ----
-function roundedFlapShape(width, height, r) {
-  const shape = new THREE.Shape();
-  const hw = width / 2;
-  shape.moveTo(-hw, 0);
-  shape.lineTo(-hw, height - r);
-  shape.quadraticCurveTo(-hw, height, -hw + r, height);
-  shape.lineTo(hw - r, height);
-  shape.quadraticCurveTo(hw, height, hw, height - r);
-  shape.lineTo(hw, 0);
-  shape.lineTo(-hw, 0);
-  return shape;
-}
-
-// ---- simple side wall shape with small tab notches (visual only, doesn't affect fold) ----
-function sideWallShape(width, height) {
-  const shape = new THREE.Shape();
-  const hw = width / 2;
-  shape.moveTo(-hw, 0);
-  shape.lineTo(-hw, height);
-  shape.lineTo(hw, height);
-  shape.lineTo(hw, 0);
-  shape.lineTo(-hw, 0);
-  return shape;
-}
-
-// wall builder: outerGroup = static placement, foldGroup = the hinge that animates
-function makeWall(shapeFn, width, height, edgePos, staticYRotation, useLabel) {
-  const outerGroup = new THREE.Group();
-  outerGroup.position.copy(edgePos);
-  outerGroup.rotation.y = staticYRotation;
-  scene.add(outerGroup);
-
-  const foldGroup = new THREE.Group();
-  outerGroup.add(foldGroup);
-
-  const shape = shapeFn(width, height);
-  const outerGeo = new THREE.ShapeGeometry(shape);
-  const outerMesh = new THREE.Mesh(outerGeo, useLabel ? labelMat : outerMat);
-  outerMesh.rotation.x = Math.PI / 2;
-
-  const innerGeo = new THREE.ShapeGeometry(shape);
-  innerGeo.translate(0, 0, 0.01);
-  const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-  innerMesh.rotation.x = Math.PI / 2;
-  innerMesh.rotation.z = Math.PI;
-
-  foldGroup.add(outerMesh);
-  foldGroup.add(innerMesh);
-
-  return { foldGroup };
-}
-
-// front/back use the rounded flap shape; left/right use the simple side shape
-const front = makeWall((w,h) => roundedFlapShape(w, h, 0.4), W, flapH, new THREE.Vector3(0, 0, D / 2), 0, true);
-const back  = makeWall((w,h) => roundedFlapShape(w, h, 0.4), W, flapH, new THREE.Vector3(0, 0, -D / 2), Math.PI, false);
-const left  = makeWall(sideWallShape, D, H, new THREE.Vector3(-W / 2, 0, 0), Math.PI / 2, false);
-const right = makeWall(sideWallShape, D, H, new THREE.Vector3(W / 2, 0, 0), -Math.PI / 2, false);
-
-// ---- fold state: ONE number t drives every wall. All walls use the SAME angle formula. ----
-const state = { t: 0 };
-function updateFold() {
-  const angle = -Math.PI / 2 * state.t;
-  front.foldGroup.rotation.x = angle;
-  back.foldGroup.rotation.x = angle;
-  left.foldGroup.rotation.x = angle;
-  right.foldGroup.rotation.x = angle;
-}
-updateFold();
-
-// ---- smooth animate for buttons ----
-let animating = false;
-function animateTo(target, duration = 1200) {
-  if (animating) return;
-  animating = true;
-  const start = state.t;
-  const startTime = performance.now();
-  function step(now) {
-    const p = Math.min((now - startTime) / duration, 1);
-    const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
-    state.t = start + (target - start) * eased;
-    updateFold();
-    if (p < 1) requestAnimationFrame(step);
-    else animating = false;
-  }
-  requestAnimationFrame(step);
-}
-
-document.getElementById("openBtn").addEventListener("click", () => animateTo(0));
-document.getElementById("closeBtn").addEventListener("click", () => animateTo(1));
-document.getElementById("resetBtn").addEventListener("click", () => {
-  state.t = 0;
-  updateFold();
-  camera.position.set(0, 8, 10);
-  controls.target.set(0, 1, 0);
-});
-
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-animate();
-
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-</script>
-</body>
-</html>
