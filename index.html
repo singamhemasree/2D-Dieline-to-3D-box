@@ -2,153 +2,190 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sivi Challenge 01 - 3D Box</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIVI CHALLENGE - Hemasree</title>
     <style>
-        body { margin: 0; background: #1a1a1a; color: white; font-family: monospace; overflow: hidden; }
-        #ui { position: absolute; z-index: 10; padding: 20px; width: 300px; background: rgba(0,0,0,0.7); }
-        canvas { display: block; }
-        input { width: 100%; margin-top: 10px; cursor: pointer; }
+        body { margin: 0; background: #0a0a0a; color: #eee; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #ui { position: absolute; top: 20px; left: 20px; z-index: 100; background: rgba(15, 15, 15, 0.9); padding: 25px; border: 1px solid #333; border-radius: 8px; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { margin: 0 0 5px 0; font-size: 20px; color: #4facfe; text-transform: uppercase; letter-spacing: 2px; }
+        .dev-name { font-size: 12px; color: #888; margin-bottom: 20px; }
+        input[type="range"] { width: 100%; cursor: pointer; margin: 15px 0; accent-color: #4facfe; }
+        .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #aaa; font-weight: bold; }
+        .controls-hint { font-size: 10px; color: #555; margin-top: 10px; }
+        #percent { font-weight: bold; color: #4facfe; float: right; }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <h3>SIVI CHALLENGE 01</h3>
-    <label>1. Upload Dieline (PNG/JPG)</label>
-    <input type="file" id="upload" accept="image/*">
-    <br><br>
-    <label>2. Fold Animation</label>
-    <input type="range" id="foldRange" min="0" max="1.57" step="0.01" value="0">
-    <p>Fold the Box (0 - 90°)</p>
+    <h2>BUILD CHALLENGE</h2>
+    <div class="dev-name">DEVELOPER: HEMASREE</div>
+    
+    <div class="label">Step 1: Texture Upload</div>
+    <input type="file" id="uroller" accept="image/*" style="margin-top:10px; font-size: 10px;">
+    
+    <div class="label" style="margin-top:25px;">Step 2: Folding Logic <span id="percent">0%</span></div>
+    <input type="range" id="folder" min="0" max="1.5708" step="0.01" value="0">
+    
+    <div class="controls-hint">Orbit: Left Click | Zoom: Scroll | Pan: Right Click</div>
 </div>
 
-<!-- Load Three.js from CDN -->
 <script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    { "imports": { "three": "https://unpkg.com/three@0.162.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/" } }
 </script>
 
 <script type="module">
     import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // --- SCENE SETUP ---
+    // --- 1. INITIALIZATION ---
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    scene.background = new THREE.Color(0x0a0a0a);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    // Light
-    const light = new THREE.DirectionalLight(0xffffff, 3);
-    light.position.set(5, 10, 7.5);
-    scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
+    const controls = new OrbitControls(camera, renderer.domElement);
+    camera.position.set(6, 6, 6);
+    controls.enableDamping = true;
 
-    camera.position.set(4, 4, 6);
-    camera.lookAt(0, 0, 0);
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const pointLight = new THREE.PointLight(0xffffff, 50);
+    pointLight.position.set(5, 8, 5);
+    pointLight.castShadow = true;
+    scene.add(pointLight);
 
-    // --- THE MATH MOVE: HINGE LOGIC ---
-    // Function to create a panel that rotates from its edge
-    function createPanel(w, h, color = 0xd2b48c) {
-        const group = new THREE.Group(); // The Hinge
-        const geometry = new THREE.PlaneGeometry(w, h);
-        const material = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
-        const mesh = new THREE.Mesh(geometry, material);
+    // --- 2. CUSTOM NAME TEXTURE (HEMASREE) ---
+    function createNameTexture(name) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        // Cardboard color background
+        ctx.fillStyle = '#966F33';
+        ctx.fillRect(0, 0, 512, 512);
+        // Branding text
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.font = 'bold 60px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(name, 256, 256);
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(50, 50, 412, 412);
         
-        // Pivot Move: Shift mesh so its edge is at the group's center
-        mesh.position.y = h / 2; 
-        group.add(mesh);
-        
-        return { group, mesh };
+        const tex = new THREE.CanvasTexture(canvas);
+        return tex;
+    }
+    const nameTexture = createNameTexture("HEMASREE");
+
+    // --- 3. THE "MATH MOVE" HELPER ---
+    function createPanel(w, h, isLid = false) {
+        const hinge = new THREE.Group();
+        const mat = new THREE.MeshStandardMaterial({ 
+            color: 0x966F33, 
+            side: THREE.DoubleSide,
+            map: isLid ? nameTexture : null 
+        });
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.position.y = h / 2; // Pivots from the bottom edge
+        hinge.add(mesh);
+        return { hinge, mesh };
     }
 
-    // --- BUILD THE MAILER BOX (Image Hierarchy) ---
-    const root = new THREE.Group(); // Center of the world
-    scene.add(root);
+    // --- 4. BOX CONSTRUCTION ---
+    const world = new THREE.Group();
+    world.rotation.x = -Math.PI / 2; 
+    scene.add(world);
 
-    // 1. Base (The center panel)
-    const base = new THREE.Mesh(new THREE.PlaneGeometry(3, 2.5), new THREE.MeshStandardMaterial({ color: 0x8b5e3c }));
-    base.rotation.x = -Math.PI / 2;
-    root.add(base);
+    // BASE
+    const base = new THREE.Mesh(
+        new THREE.PlaneGeometry(3, 2.5), 
+        new THREE.MeshStandardMaterial({ color: 0x825a2c, side: THREE.DoubleSide })
+    );
+    world.add(base);
 
-    // 2. Back Wall (Child of Base)
-    const back = createPanel(3, 1.5);
-    back.group.position.y = 1.25; // edge of base
-    base.add(back.group);
+    // HINGE CHAIN: Back -> Lid (With Name) -> Tuck
+    const back = createPanel(3, 1.8);
+    back.hinge.position.y = 1.25; 
+    base.add(back.hinge);
 
-    // 3. Lid (Child of Back Wall)
-    const lid = createPanel(3, 2.5);
-    lid.group.position.y = 1.5; 
-    back.group.add(lid.group);
+    const lid = createPanel(3, 2.5, true); // This one has "HEMASREE"
+    lid.hinge.position.y = 1.8;
+    back.hinge.add(lid.hinge);
 
-    // 4. Front Tuck (Child of Lid)
     const tuck = createPanel(3, 0.6);
-    tuck.group.position.y = 2.5;
-    lid.group.add(tuck.group);
+    tuck.hinge.position.y = 2.5;
+    lid.hinge.add(tuck.hinge);
 
-    // 5. Front Wall (Attached to other side of base)
-    const front = createPanel(3, 1.5);
-    front.group.position.y = -1.25;
-    front.group.rotation.z = Math.PI; // Flip to face forward
-    base.add(front.group);
+    // FRONT
+    const front = createPanel(3, 1.8);
+    front.hinge.position.y = -1.25;
+    front.hinge.rotation.z = Math.PI;
+    base.add(front.hinge);
 
-    // 6. Side Walls
-    const left = createPanel(2.5, 1.5);
-    left.group.position.x = -1.5;
-    left.group.rotation.z = Math.PI / 2;
-    base.add(left.group);
+    // SIDES
+    const left = createPanel(2.5, 1.8);
+    left.hinge.position.x = -1.5;
+    left.hinge.rotation.z = Math.PI / 2;
+    base.add(left.hinge);
 
-    const right = createPanel(2.5, 1.5);
-    right.group.position.x = 1.5;
-    right.group.rotation.z = -Math.PI / 2;
-    base.add(right.group);
+    const right = createPanel(2.5, 1.8);
+    right.hinge.position.x = 1.5;
+    right.hinge.rotation.z = -Math.PI / 2;
+    base.add(right.hinge);
 
-    // --- INTERACTION ---
-    const slider = document.getElementById('foldRange');
-    const uploadInput = document.getElementById('upload');
+    // --- 5. LOGIC & ANIMATION ---
+    const slider = document.getElementById('folder');
+    const pctDisplay = document.getElementById('percent');
+    const uploader = document.getElementById('uroller');
 
-    // Folder Animation Loop
     function animate() {
         requestAnimationFrame(animate);
+        controls.update();
+        
         const angle = parseFloat(slider.value);
+        
+        // Apply rotation to all hinges simultaneously
+        back.hinge.rotation.x = angle;
+        lid.hinge.rotation.x = angle;
+        tuck.hinge.rotation.x = angle * 0.7; // Flap folds slightly differently
+        front.hinge.rotation.x = angle;
+        left.hinge.rotation.x = angle;
+        right.hinge.rotation.x = angle;
 
-        // Fold the chain
-        back.group.rotation.x = angle;
-        lid.group.rotation.x = angle;
-        tuck.group.rotation.x = angle * 0.5; // Slight angle for the tuck
-        front.group.rotation.x = angle;
-        left.group.rotation.x = angle;
-        right.group.rotation.x = angle;
-
-        // Slow auto-rotation for the whole scene
-        root.rotation.y += 0.005;
-
+        pctDisplay.innerText = Math.round((angle / 1.57) * 100) + "%";
+        
         renderer.render(scene, camera);
     }
 
-    // Handle Texture Upload
-    uploadInput.onchange = (e) => {
+    // Requirement: Let user override dieline with their own file
+    uploader.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const loader = new THREE.TextureLoader();
-            const texture = loader.load(event.target.result);
-            // Apply to all meshes
-            scene.traverse(obj => {
-                if(obj.isMesh) obj.material.map = texture;
-            });
-        };
-        reader.readAsDataURL(file);
-    };
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const customTex = new THREE.TextureLoader().load(event.target.result);
+                scene.traverse(node => {
+                    if (node.isMesh) node.material.map = customTex;
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     animate();
 
-    // Resize handling
-    window.addEventListener('resize', () => {
+    window.onresize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
+    };
 </script>
 </body>
 </html>
