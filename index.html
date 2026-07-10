@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIVI 3D Box Challenge</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #f4f4f4; }
+        #ui { position: absolute; top: 20px; left: 20px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10; }
+        input { width: 200px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h2>Box Folding Challenge</h2>
+        <p>Fold Progress:</p>
+        <input type="range" id="foldSlider" min="0" max="1.57" step="0.01" value="0">
+        <p style="font-size: 0.8em; color: #666;">Math Move: Hierarchical Hinge Pivots</p>
+    </div>
+
+    <!-- We load Three.js from a CDN so we don't have to install it -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 1. SCENE SETUP
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // LIGHTS
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+
+        // 2. THE BOX LOGIC (The "Math Move")
+        // We create HINGE GROUPS. When the group rotates, the panel attached to it moves.
+        function createHinge(w, h, color) {
+            const group = new THREE.Group();
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, 0.05),
+                new THREE.MeshStandardMaterial({ color: color, side: THREE.DoubleSide })
+            );
+            // Offset the mesh so the rotation point is the edge, not the center
+            mesh.position.y = h / 2; 
+            group.add(mesh);
+            return { group, mesh };
+        }
+
+        // BASE (The middle part that doesn't move)
+        const base = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 0.05), new THREE.MeshStandardMaterial({ color: 0xD2B48C }));
+        base.rotation.x = -Math.PI / 2;
+        scene.add(base);
+
+        // BACK WALL
+        const backWall = createHinge(4, 2, 0xC19A6B);
+        backWall.group.position.set(0, 0, -2);
+        scene.add(backWall.group);
+
+        // TOP LID (This is nested inside Back Wall)
+        const lid = createHinge(4, 4, 0xD2B48C);
+        lid.group.position.set(0, 2, 0); // Put it at the top of the back wall
+        backWall.group.add(lid.group);
+
+        // FRONT WALL
+        const frontWall = createHinge(4, 2, 0xC19A6B);
+        frontWall.group.position.set(0, 0, 2);
+        frontWall.group.rotation.x = Math.PI; // Start flat on the other side
+        scene.add(frontWall.group);
+
+        // 3. ANIMATION LOOP
+        const slider = document.getElementById('foldSlider');
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(5, 5, 8);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const angle = parseFloat(slider.value);
+            
+            // Apply rotations to hinges
+            backWall.group.rotation.x = -Math.PI/2 + angle;
+            lid.group.rotation.x = angle;
+            frontWall.group.rotation.x = Math.PI/2 - angle;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
